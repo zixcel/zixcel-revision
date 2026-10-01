@@ -126,6 +126,10 @@ fn lifecycle<B: Backend>(store: &CommitStore<B>) {
 #[test]
 fn retirement_replay_shared_objects_and_aba_preserve_receipts() {
     lifecycle(&CommitStore::new(MemoryBackend::default()));
+}
+#[cfg(feature = "redb")]
+#[test]
+fn retirement_replay_shared_objects_and_aba_preserve_durable_receipts() {
     let dir = tempfile::tempdir().unwrap();
     lifecycle(&CommitStore::new(
         RedbBackend::create(dir.path().join("owner.redb")).unwrap(),
