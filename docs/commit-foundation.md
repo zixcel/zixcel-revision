@@ -1,8 +1,8 @@
 # Generic commit foundation (0.10.0)
 
 This independent package confirms changes reproducibly; it does not decide their meaning.
-It has no dependency on sem-lang, Hatter, credentials, networks, models or graph
-types. `CommitIntent<T>` accepts an owner-validated proposal. `prepare_with`
+Callers reference this package as a versioned dependency and provide domain-specific
+composition. `CommitIntent<T>` accepts an owner-validated proposal. `prepare_with`
 consumes it and its deterministic owner encoder. The sealed representation is
 immutable bytes, not a mutable generic object or a semantic shadow store.
 
