@@ -1,0 +1,37 @@
+# Revision foundation 0.10.0: generic object/ref mechanics, no Graph dependency.
+[package]
+exclude = ["*.tgz", "**/*.tgz", "/registration/**", "/state/**", "/.local/**", "/.state/**", "/.data/**", "/secrets/**", "/credentials/**", "/.env", "/.env.production", "/.env.local", "/*.tgz", "/*.tar.gz", "/*.tar", "/*.zip", "/*.whl", "/*.crate", "/.ruff_cache/**", "/.mypy_cache/**", "/.tox/**", "/.nox/**", "/.hypothesis/**", "/.coverage", "/.coverage.*", "/htmlcov/**", "/lcov.info", "/junit.xml", "/*.profraw", "/*.profdata", "/*.egg-info/**", "/target/**", "/node_modules/**", "/dist/**", "/build/**", "/.cache/**", "/.pytest_cache/**", "/coverage/**"]
+name = "zixcel-revision"
+version = "0.10.0"
+edition = "2024"
+rust-version = "1.97"
+description = "Bounded content-addressed revision streams, CAS and retention"
+license = "Apache-2.0"
+publish = ["zixcel-private"]
+
+[workspace]
+members = ["."]
+resolver = "3"
+
+[dependencies]
+redb = { version = "4.1.0", optional = true }
+sha2 = "0.10.9"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.149", optional = true }
+thiserror = "2.0.18"
+ed25519-dalek = { version = "2.2.0", optional = true, default-features = false, features = ["std", "zeroize"] }
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[features]
+default = []
+redb = ["dep:redb", "dep:serde_json"]
+attestation = ["dep:ed25519-dalek", "dep:serde_json"]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"

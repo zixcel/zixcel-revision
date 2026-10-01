@@ -1,0 +1,18 @@
+[package]
+name = "zixcel-revision-conformance"
+version = "0.10.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+
+[workspace]
+
+[dependencies]
+zixcel-revision = { version = "=0.10.0", registry = "zixcel-private", default-features = false }
+
+[features]
+durable = ["zixcel-revision/redb"]
+
+[profile.dev]
+debug = 0
+incremental = false
