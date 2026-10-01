@@ -127,13 +127,17 @@ fn races<B: Backend>(store: &CommitStore<B>) {
 fn retain_retire_release_reregister_reclaim_races_are_linearizable() {
     for _ in 0..8 {
         races(&CommitStore::new(MemoryBackend::default()));
-        let dir = tempfile::tempdir().unwrap();
-        races(&CommitStore::new(
-            RedbBackend::create(dir.path().join("race.redb")).unwrap(),
-        ));
+        #[cfg(feature = "redb")]
+        {
+            let dir = tempfile::tempdir().unwrap();
+            races(&CommitStore::new(
+                RedbBackend::create(dir.path().join("race.redb")).unwrap(),
+            ));
+        }
     }
 }
 
+#[cfg(feature = "redb")]
 fn child(file: &std::path::Path, operation: &str) {
     let result = std::process::Command::new(std::env::current_exe().unwrap())
         .args(["--exact", "crash_child", "--nocapture"])
@@ -148,6 +152,7 @@ fn child(file: &std::path::Path, operation: &str) {
         String::from_utf8_lossy(&result.stderr)
     );
 }
+#[cfg(feature = "redb")]
 #[test]
 fn durable_retirement_hold_drain_reclaim_and_lost_response_survive_abrupt_exit() {
     let dir = tempfile::tempdir().unwrap();
@@ -225,6 +230,7 @@ fn durable_retirement_hold_drain_reclaim_and_lost_response_survive_abrupt_exit()
     );
     assert_eq!(store.commit(&prepared), CommitOutcome::NoChange(receipt));
 }
+#[cfg(feature = "redb")]
 #[test]
 fn crash_child() {
     let Ok(file) = std::env::var("ZG1_CHILD_FILE") else {
