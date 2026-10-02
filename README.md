@@ -1,25 +1,28 @@
-# Zixcel Revision
+# zixcel-revision
 
-Generic bounded immutable content, per-domain head CAS, exact operation replay
-and external retention. Callers supply domain-specific payloads and execution
-policy through the package interface.
+Retain immutable revisions and detect conflicting updates when an operation is retried.
 
-`CommitRef` identifies the content-addressed revision envelope; `RevisionRef`
-combines that identity and its ordered stream position. Domain is the stream key.
-Owners validate payloads and authority before publication. redb is optional;
-backends must atomically publish content, head and receipt or change none.
+## What you can do
 
-Reads never initialize or recover. External references do not copy external
-payloads and retention alone does not guarantee those bytes exist. Explicit owner
-reclamation is fenced with non-reused registration generations and durable permits.
-Committed receipts remain bounded roots; this does not promise unlimited history.
+- Bind updates to an exact revision.
+- Inspect retained evidence and conflict results.
 
-## License
+## Current scope
 
-Apache-2.0. Copyright 2026 HAT Inc. See [LICENSE](LICENSE) and [NOTICE](NOTICE). External dependencies retain their respective licenses.
+Revision records cannot prove that an arbitrary external effect happened exactly once.
 
-## Package integration
+Package distribution is not activated by this documentation. Use the checked-in source and the declared dependency versions; published availability must be verified separately.
 
-The package is an independently consumable unit. Callers reference its documented
-interface through a versioned dependency and own application-specific composition
-and integration.
+## Getting started
+
+Install Rust 1.97 or newer and make the declared dependencies available. Use the configured private registry when a dependency is not distributed publicly. Run from this repository:
+
+```sh
+cargo test --locked
+```
+
+## Documentation and source
+
+[Usage guide](docs/getting-started.md)
+
+[Detailed documentation](docs) · [Implementation and public interfaces](src) · [Verification cases](tests) · [Contributing](CONTRIBUTING.md) · [Security reporting](SECURITY.md) · [License](LICENSE) · [Attribution notices](NOTICE)
