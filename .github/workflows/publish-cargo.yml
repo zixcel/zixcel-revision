@@ -1,0 +1,103 @@
+name: Publish reviewed zixcel-revision
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [prepare, bootstrap, oidc]
+        default: prepare
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: package-publication-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      archive-sha256: ${{ steps.binding.outputs.archive-sha256 }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {fetch-depth: 0, persist-credentials: false}
+      - name: Isolate Cargo configuration
+        run: echo "CARGO_HOME=$RUNNER_TEMP/cargo-home" >> "$GITHUB_ENV"
+      - name: Require approved public source and release tag
+        env:
+          RELEASE_MODE: ${{ inputs.mode }}
+          APPROVED_SHA: ${{ vars.REGISTRY_SECURITY_APPROVED_SHA }}
+          PUBLISH_ENABLED: ${{ vars.REGISTRY_PUBLISH_ENABLED }}
+          BOOTSTRAP_ENABLED: ${{ vars.REGISTRY_BOOTSTRAP_ENABLED }}
+        run: python3 .github/scripts/release-gate.py
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal --component clippy
+      - name: Test, lint and verify actual package without credentials
+        run: |
+          cargo +1.97.1 test --locked --all-targets --all-features
+          cargo +1.97.1 test --locked --doc --all-features
+          cargo +1.97.1 clippy --locked --all-targets --all-features -- -D warnings
+          cargo +1.97.1 package --locked
+          mkdir -p "$RUNNER_TEMP/package-release"
+          cp target/package/zixcel-revision-0.10.0.crate "$RUNNER_TEMP/package-release/"
+      - name: Inspect and bind archive
+        id: binding
+        run: python3 .github/scripts/check-crate-release.py prepare "$RUNNER_TEMP/package-release"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        id: upload
+        with:
+          name: crate-release-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/package-release/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: false
+  publish:
+    needs: prepare
+    if: inputs.mode != 'prepare' && vars.REGISTRY_PUBLISH_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: crates-public
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {ref: '${{ github.sha }}', fetch-depth: 0, persist-credentials: false}
+      - name: Isolate Cargo configuration
+        run: echo "CARGO_HOME=$RUNNER_TEMP/cargo-home" >> "$GITHUB_ENV"
+      - name: Recheck source, gates and registry state
+        env:
+          RELEASE_MODE: ${{ inputs.mode }}
+          APPROVED_SHA: ${{ vars.REGISTRY_SECURITY_APPROVED_SHA }}
+          PUBLISH_ENABLED: ${{ vars.REGISTRY_PUBLISH_ENABLED }}
+          BOOTSTRAP_ENABLED: ${{ vars.REGISTRY_BOOTSTRAP_ENABLED }}
+        run: python3 .github/scripts/release-gate.py
+      - run: rustup toolchain install 1.97.1 --profile minimal
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/package-release
+      - name: Verify archive and native Cargo repack before authentication
+        env:
+          EXPECTED_ARCHIVE_SHA256: ${{ needs.prepare.outputs.archive-sha256 }}
+        run: |
+          python3 .github/scripts/check-crate-release.py verify "$RUNNER_TEMP/package-release"
+          cargo +1.97.1 publish --dry-run --locked --no-verify --registry crates-io
+          cmp target/package/tmp-crate/zixcel-revision-0.10.0.crate "$RUNNER_TEMP/package-release/zixcel-revision-0.10.0.crate"
+      - name: First publication with this repository's temporary token
+        if: inputs.mode == 'bootstrap'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_BOOTSTRAP_TOKEN }}
+        run: |
+          test -n "$CARGO_REGISTRY_TOKEN"
+          cargo +1.97.1 publish --locked --no-verify --registry crates-io
+      - uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18
+        if: inputs.mode == 'oidc'
+        id: auth
+      - name: Subsequent publication with repository OIDC identity
+        if: inputs.mode == 'oidc'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo +1.97.1 publish --locked --no-verify --registry crates-io
