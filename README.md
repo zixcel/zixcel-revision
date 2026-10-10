@@ -1,28 +1,50 @@
 # zixcel-revision
 
-Retain immutable revisions and detect conflicting updates when an operation is retried.
+Bounded, content-addressed revision storage with compare-and-swap conflict checks, retry receipts and explicit retention. Use this crate when a service needs deterministic commit mechanics while keeping payload interpretation and authorization in the owning application.
 
-## What you can do
+## Install
 
-- Bind updates to an exact revision.
-- Inspect retained evidence and conflict results.
-
-## Current scope
-
-Revision records cannot prove that an arbitrary external effect happened exactly once.
-
-Package distribution is not activated by this documentation. Use the checked-in source and the declared dependency versions; published availability must be verified separately.
-
-## Getting started
-
-Install Rust 1.97 or newer and make the declared dependencies available. Use the configured private registry when a dependency is not distributed publicly. Run from this repository:
-
-```sh
-cargo test --locked
+```toml
+[dependencies]
+zixcel-revision = "0.10.0"
 ```
 
-## Documentation and source
+This dependency uses crates.io; no private registry is required.
 
-[Usage guide](docs/getting-started.md)
+## Capabilities
 
-[Detailed documentation](docs) · [Implementation and public interfaces](src) · [Verification cases](tests) · [Contributing](CONTRIBUTING.md) · [Security reporting](SECURITY.md) · [License](LICENSE) · [Attribution notices](NOTICE)
+- Prepare immutable commits from caller-validated canonical payloads.
+- Atomically publish content, heads and receipts through a backend.
+- Retain, retire and reclaim revision objects under explicit bounds.
+
+## Example
+
+```rust
+use zixcel_revision::{CommitStore, MemoryBackend};
+
+let store = CommitStore::new(MemoryBackend::default());
+assert!(store.current("example-domain")?.is_none());
+# Ok::<(), zixcel_revision::Failure>(())
+```
+
+## Features and requirements
+
+Default features use the in-memory backend. Enable `redb` for durable storage and `attestation` for signed evidence.
+
+## Boundaries
+
+Revision receipts describe this store. They cannot prove that an arbitrary external side effect occurred exactly once. The owner defines canonical payload encoding and semantic validation.
+
+## Development
+
+```sh
+cargo fmt --all -- --check
+cargo test --locked --all-features
+cargo clippy --locked --all-targets --all-features -- -D warnings
+```
+
+## Documentation and license
+
+[API documentation](https://docs.rs/zixcel-revision) · [Source](https://github.com/zixcel/zixcel-revision) · [Usage guide](https://github.com/zixcel/zixcel-revision/blob/main/docs/getting-started.md)
+
+Apache-2.0. Retain the package LICENSE and NOTICE; see the source repository for security reporting and contribution guidelines.

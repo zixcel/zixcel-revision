@@ -1,0 +1,104 @@
+name: Review and publish Cargo crate
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        options: [verify, publish]
+        default: verify
+permissions:
+  contents: read
+concurrency:
+  group: reviewed-crate-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: vars.REGISTRY_VALIDATION_ENABLED == 'true' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      archive_sha256: ${{ steps.archive.outputs.sha256 }}
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require the reviewed source
+        env:
+          APPROVED_SHA: ${{ vars.REGISTRY_SECURITY_APPROVED_SHA }}
+          REGISTRY_OPERATION: ${{ inputs.operation }}
+        run: |
+          test "$APPROVED_SHA" = "$GITHUB_SHA"
+          if [ "$REGISTRY_OPERATION" = publish ]; then
+            git merge-base --is-ancestor HEAD origin/main
+          else
+            git merge-base --is-ancestor origin/main HEAD
+          fi
+          rustup toolchain install 1.97 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.97
+      - name: Validate public package metadata
+        id: metadata
+        run: |
+          cargo metadata --locked --no-deps --format-version 1 > /tmp/package-metadata.json
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const d = JSON.parse(fs.readFileSync('/tmp/package-metadata.json'));
+          const p = d.packages.find(p => p.manifest_path === `${process.env.GITHUB_WORKSPACE}/Cargo.toml`);
+          if (!p || JSON.stringify(p.publish) !== '["crates-io"]'
+            || p.repository !== `https://github.com/${process.env.GITHUB_REPOSITORY}`) {
+            throw new Error('Public package metadata is not the reviewed crate');
+          }
+          fs.appendFileSync(process.env.GITHUB_ENV, `PACKAGE_ARCHIVE=target/package/${p.name}-${p.version}.crate\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${p.version}\n`);
+          JS
+      - name: Verify independent package build
+        run: |
+          cargo fmt --all -- --check
+          cargo test --locked --all-features
+          cargo clippy --locked --all-targets --all-features -- -D warnings
+          cargo package --locked --registry crates-io
+      - name: Record the review artifact digest
+        id: archive
+        run: |
+          sha256sum "$PACKAGE_ARCHIVE"
+          echo "sha256=$(sha256sum "$PACKAGE_ARCHIVE" | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-cargo-package
+          path: ${{ env.PACKAGE_ARCHIVE }}
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: verify
+    if: inputs.operation == 'publish' && vars.REGISTRY_PUBLISH_ENABLED == 'true' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: crates-io-public
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Require the approved tag and CI artifact
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+          VERIFIED_SHA256: ${{ needs.verify.outputs.archive_sha256 }}
+          APPROVED_SHA256: ${{ vars.REGISTRY_APPROVED_ARCHIVE_SHA256 }}
+        run: |
+          test "$GITHUB_REF_NAME" = "v${VERSION}"
+          test -n "$APPROVED_SHA256"
+          test "$VERIFIED_SHA256" = "$APPROVED_SHA256"
+          rustup toolchain install 1.97 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.97
+          cargo package --locked --registry crates-io
+          test "$(sha256sum target/package/*.crate | cut -d ' ' -f 1)" = "$APPROVED_SHA256"
+      - name: Obtain a short-lived scoped crates.io token
+        id: auth
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18
+      - name: Publish the approved crate
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish --locked --registry crates-io
