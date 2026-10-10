@@ -1,3 +1,4 @@
+#![doc = include_str!("../README.crate.md")]
 // Revision foundation 0.10.0: extracted unchanged mechanics; no domain policy.
 //! Deterministic, domain-neutral commit control. No validation of payload meaning.
 //!

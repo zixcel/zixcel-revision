@@ -1,5 +1,7 @@
 # Revision foundation 0.10.0: generic object/ref mechanics, no Graph dependency.
 [package]
+readme = "README.crate.md"
+repository = "https://github.com/zixcel/zixcel-revision"
 exclude = ["*.tgz", "**/*.tgz", "/registration/**", "/state/**", "/.local/**", "/.state/**", "/.data/**", "/secrets/**", "/credentials/**", "/.env", "/.env.production", "/.env.local", "/*.tgz", "/*.tar.gz", "/*.tar", "/*.zip", "/*.whl", "/*.crate", "/.ruff_cache/**", "/.mypy_cache/**", "/.tox/**", "/.nox/**", "/.hypothesis/**", "/.coverage", "/.coverage.*", "/htmlcov/**", "/lcov.info", "/junit.xml", "/*.profraw", "/*.profdata", "/*.egg-info/**", "/target/**", "/node_modules/**", "/dist/**", "/build/**", "/.cache/**", "/.pytest_cache/**", "/coverage/**"]
 name = "zixcel-revision"
 version = "0.10.0"
@@ -7,7 +9,7 @@ edition = "2024"
 rust-version = "1.97"
 description = "Bounded content-addressed revision streams, CAS and retention"
 license = "Apache-2.0"
-publish = ["zixcel-private"]
+publish = ["crates-io"]
 
 [workspace]
 members = ["."]

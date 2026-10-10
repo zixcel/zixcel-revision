@@ -1,0 +1,32 @@
+name: Verify Cargo distribution
+on:
+  push:
+    branches: [release/crates-io-zixcel-revision-0.10.0-readme]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install the declared Rust toolchain
+        run: |
+          rustup toolchain install 1.97 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.97
+      - name: Verify source and independent package
+        run: |
+          cargo fmt --all -- --check
+          cargo test --locked --all-features
+          cargo clippy --locked --all-targets --all-features -- -D warnings
+          cargo package --locked --registry crates-io
+          sha256sum target/package/zixcel-revision-0.10.0.crate
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: zixcel-revision-reviewed-distribution
+          path: target/package/zixcel-revision-0.10.0.crate
+          if-no-files-found: error
+          retention-days: 7
