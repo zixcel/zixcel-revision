@@ -8,7 +8,7 @@ publish = false
 [workspace]
 
 [dependencies]
-zixcel-revision = { version = "=0.10.0", registry = "zixcel-private", default-features = false }
+zixcel-revision = { version = "=0.10.0", default-features = false }
 
 [features]
 durable = ["zixcel-revision/redb"]
