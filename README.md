@@ -48,3 +48,5 @@ cargo clippy --locked --all-targets --all-features -- -D warnings
 [API documentation](https://docs.rs/zixcel-revision) · [Source](https://github.com/zixcel/zixcel-revision) · [Usage guide](https://github.com/zixcel/zixcel-revision/blob/main/docs/getting-started.md)
 
 Apache-2.0. Retain the package LICENSE and NOTICE; see the source repository for security reporting and contribution guidelines.
+
+[OSS responsibility and source completion](docs/oss-source-contract.md) defines the supported package boundary and required acceptance. It does not declare unexecuted source, distribution or production checks complete.
