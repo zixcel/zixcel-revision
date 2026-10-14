@@ -13,6 +13,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Resolve archive names from current package manifests
+        run: python3 "$GITHUB_WORKSPACE/.github/scripts/archive_names.py"
       - name: Install the declared Rust toolchain
         run: |
           rustup toolchain install 1.97 --profile minimal --component rustfmt --component clippy
@@ -23,10 +25,10 @@ jobs:
           cargo test --locked --all-features
           cargo clippy --locked --all-targets --all-features -- -D warnings
           cargo package --locked --all-features --registry crates-io
-          sha256sum target/package/zixcel-revision-0.10.0.crate
+          sha256sum target/package/${PACKAGE_ARCHIVE_ZIXCEL_REVISION_CARGO}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: zixcel-revision-reviewed-distribution
-          path: target/package/zixcel-revision-0.10.0.crate
+          path: target/package/${{ env.PACKAGE_ARCHIVE_ZIXCEL_REVISION_CARGO }}
           if-no-files-found: error
           retention-days: 7
