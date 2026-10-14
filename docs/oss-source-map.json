@@ -76,9 +76,12 @@
     "tests/commit_foundation.rs",
     "tests/external_reclamation.rs",
     "tests/external_retirement.rs",
-    "tests/external_retirement_recovery.rs"
+    "tests/external_retirement_recovery.rs",
+    "tests/durable_cache.rs"
   ],
-  "example_sources": [],
+  "example_sources": [
+    "examples/durable-cache.rs"
+  ],
   "workflow_definitions": [
     {
       "path": ".github/workflows/ci.yml",
