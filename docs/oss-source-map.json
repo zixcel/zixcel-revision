@@ -76,9 +76,12 @@
     "tests/commit_foundation.rs",
     "tests/external_reclamation.rs",
     "tests/external_retirement.rs",
-    "tests/external_retirement_recovery.rs"
+    "tests/external_retirement_recovery.rs",
+    "tests/durable_cache.rs"
   ],
-  "example_sources": [],
+  "example_sources": [
+    "examples/durable-cache.rs"
+  ],
   "workflow_definitions": [
     {
       "path": ".github/workflows/ci.yml",
@@ -109,6 +112,12 @@
             {
               "name": "Test all features",
               "run": "cargo +1.97 test --locked --all-features",
+              "uses": null,
+              "condition": null
+            },
+            {
+              "name": "Run isolated durable cache playground",
+              "run": "cargo +1.97 run --locked --features redb --example durable-cache",
               "uses": null,
               "condition": null
             }
@@ -283,7 +292,7 @@
             },
             {
               "name": "Verify source and independent package",
-              "run": "cargo fmt --all -- --check\ncargo test --locked --all-features\ncargo clippy --locked --all-targets --all-features -- -D warnings\ncargo package --locked --registry crates-io\nsha256sum target/package/zixcel-revision-0.10.0.crate\n",
+              "run": "cargo fmt --all -- --check\ncargo test --locked --all-features\ncargo clippy --locked --all-targets --all-features -- -D warnings\ncargo package --locked --all-features --registry crates-io\nsha256sum target/package/zixcel-revision-0.10.0.crate\n",
               "uses": null,
               "condition": null
             },

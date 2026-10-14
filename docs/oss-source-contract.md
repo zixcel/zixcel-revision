@@ -65,3 +65,7 @@ Schema definitions in the map remain owned by their canonical validator and
 consumers. An absent schema file means no separate schema file is declared; it does
 not mean the runtime interface has no validation. Do not introduce another common
 schema solely to mirror an implementation type.
+
+## Shared durable cache construction
+
+The durable handle owns redb open/create/recovery and read/write transitions. Cache configuration belongs here rather than in a Graph-only wrapper. Explicit cache constructors preserve the same configured target through every reopen, including retry after foreign lock refusal. Logical initialization stays with the consumer. Existing values/revisions and default constructors remain unchanged. This target is a backend cache parameter, not a total memory/disk quota.

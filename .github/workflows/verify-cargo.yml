@@ -22,7 +22,7 @@ jobs:
           cargo fmt --all -- --check
           cargo test --locked --all-features
           cargo clippy --locked --all-targets --all-features -- -D warnings
-          cargo package --locked --registry crates-io
+          cargo package --locked --all-features --registry crates-io
           sha256sum target/package/zixcel-revision-0.10.0.crate
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

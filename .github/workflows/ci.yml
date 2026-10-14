@@ -20,3 +20,5 @@ jobs:
         run: cargo +1.97 test --locked
       - name: Test all features
         run: cargo +1.97 test --locked --all-features
+      - name: Run isolated durable cache playground
+        run: cargo +1.97 run --locked --features redb --example durable-cache
