@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "repository": "zixcel/zixcel-revision",
+  "defaultBranch": "main",
+  "requiredWorkflows": [
+    "ci.yml",
+    "oss-policy.yml",
+    "registry-conformance.yml",
+    "verify-cargo.yml"
+  ],
+  "packages": [
+    {
+      "ecosystem": "cargo",
+      "manifest": "Cargo.toml",
+      "name": "zixcel-revision",
+      "installDirectory": "."
+    }
+  ]
+}
