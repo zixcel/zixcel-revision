@@ -29,6 +29,6 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: zixcel-revision-reviewed-distribution
-          path: target/package/${PACKAGE_ARCHIVE_ZIXCEL_REVISION_CARGO}
+          path: target/package/${{ env.PACKAGE_ARCHIVE_ZIXCEL_REVISION_CARGO }}
           if-no-files-found: error
           retention-days: 7
