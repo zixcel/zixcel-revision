@@ -1,5 +1,7 @@
 # Revision foundation 0.10.0: generic object/ref mechanics, no Graph dependency.
 [package]
+categories = ["data-structures", "database"]
+keywords = ["version-control", "content-addressed", "concurrency", "transactions", "local-first"]
 readme = "README.crate.md"
 repository = "https://github.com/zixcel/zixcel-revision"
 exclude = ["*.tgz", "**/*.tgz", "/registration/**", "/state/**", "/.local/**", "/.state/**", "/.data/**", "/secrets/**", "/credentials/**", "/.env", "/.env.production", "/.env.local", "/*.tgz", "/*.tar.gz", "/*.tar", "/*.zip", "/*.whl", "/*.crate", "/.ruff_cache/**", "/.mypy_cache/**", "/.tox/**", "/.nox/**", "/.hypothesis/**", "/.coverage", "/.coverage.*", "/htmlcov/**", "/lcov.info", "/junit.xml", "/*.profraw", "/*.profdata", "/*.egg-info/**", "/target/**", "/node_modules/**", "/dist/**", "/build/**", "/.cache/**", "/.pytest_cache/**", "/coverage/**"]
