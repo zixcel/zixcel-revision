@@ -39,7 +39,13 @@ pub enum AttestationError {
 /// Stable SHA256 of exact owner bytes. Encoding canonicalization belongs to the owner.
 #[must_use]
 pub fn content_digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut encoded, byte| {
+            use std::fmt::Write as _;
+            write!(encoded, "{byte:02x}").expect("writing to String cannot fail");
+            encoded
+        })
 }
 #[must_use]
 pub fn valid_digest(value: &str) -> bool {
